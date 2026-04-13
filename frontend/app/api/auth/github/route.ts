@@ -1,14 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import { proxyToBackend } from "@/lib/proxy";
 
-export async function GET() {
-  const clientId = process.env.GITHUB_CLIENT_ID!;
-  const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/github/callback`;
-
-  const params = new URLSearchParams({
-    client_id: clientId,
-    redirect_uri: redirectUri,
-    scope: "read:user user:email",
-  });
-
-  return NextResponse.redirect(`https://github.com/login/oauth/authorize?${params}`);
+export async function GET(req: NextRequest) {
+  return proxyToBackend(req, "/api/auth/github");
 }

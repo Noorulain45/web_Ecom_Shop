@@ -44,5 +44,6 @@ const OrderSchema = new Schema<IOrder>(
   { timestamps: true }
 );
 
-const Order: Model<IOrder> = mongoose.models.Order || mongoose.model<IOrder>("Order", OrderSchema);
+const Order: Model<IOrder> =
+  mongoose.models.Order || mongoose.model<IOrder>("Order", OrderSchema);
 export default Order;

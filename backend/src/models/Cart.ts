@@ -3,7 +3,7 @@ import mongoose, { Schema, Document, Model } from "mongoose";
 interface ICartItem {
   product: mongoose.Types.ObjectId;
   quantity: number;
-  price: number; // snapshot of price at time of adding
+  price: number;
 }
 
 export interface ICart extends Document {
@@ -29,5 +29,6 @@ const CartSchema = new Schema<ICart>(
   { timestamps: true }
 );
 
-const Cart: Model<ICart> = mongoose.models.Cart || mongoose.model<ICart>("Cart", CartSchema);
+const Cart: Model<ICart> =
+  mongoose.models.Cart || mongoose.model<ICart>("Cart", CartSchema);
 export default Cart;

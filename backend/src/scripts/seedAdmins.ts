@@ -1,5 +1,5 @@
 import * as dotenv from "dotenv";
-dotenv.config({ path: ".env.local" });
+dotenv.config({ path: ".env" });
 
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
@@ -7,18 +7,21 @@ import bcrypt from "bcryptjs";
 const MONGODB_URI = process.env.MONGODB_URI as string;
 if (!MONGODB_URI) throw new Error("MONGODB_URI not set");
 
-const UserSchema = new mongoose.Schema({
-  name: String,
-  email: { type: String, unique: true, lowercase: true },
-  password: String,
-  role: { type: String, enum: ["user", "admin", "superadmin"], default: "user" },
-}, { timestamps: true });
+const UserSchema = new mongoose.Schema(
+  {
+    name: String,
+    email: { type: String, unique: true, lowercase: true },
+    password: String,
+    role: { type: String, enum: ["user", "admin", "superadmin"], default: "user" },
+  },
+  { timestamps: true }
+);
 
 const User = mongoose.models.User || mongoose.model("User", UserSchema);
 
 const admins = [
-  { name: "Admin",       email: "admin@arik.com",      password: "admin123", role: "admin" },
-  { name: "Super Admin", email: "superadmin@arik.com",  password: "admin123", role: "superadmin" },
+  { name: "Admin", email: "admin@arik.com", password: "admin123", role: "admin" },
+  { name: "Super Admin", email: "superadmin@arik.com", password: "admin123", role: "superadmin" },
 ];
 
 async function seed() {
@@ -39,4 +42,7 @@ async function seed() {
   console.log("Done.");
 }
 
-seed().catch((e) => { console.error(e); process.exit(1); });
+seed().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

@@ -1,15 +1,6 @@
-import { NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
-import { connectDB } from "@/lib/db";
-import User from "@/lib/models/User";
+import { NextRequest } from "next/server";
+import { proxyToBackend } from "@/lib/proxy";
 
-export async function GET() {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: "Unauthenticated." }, { status: 401 });
-
-  await connectDB();
-  const user = await User.findById(session.userId).select("loyaltyPoints").lean();
-  const loyaltyPoints = (user as { loyaltyPoints?: number } | null)?.loyaltyPoints ?? 0;
-
-  return NextResponse.json({ ...session, loyaltyPoints });
+export async function GET(req: NextRequest) {
+  return proxyToBackend(req, "/api/auth/me");
 }

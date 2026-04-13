@@ -1,7 +1,6 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
 export type UserRole = "user" | "admin" | "superadmin";
-
 export type AuthProvider = "local" | "google" | "github" | "discord";
 
 export interface IUser extends Document {
