@@ -10,6 +10,7 @@ export type TokenPayload = {
   email: string;
   role: "user" | "admin" | "superadmin";
   name: string;
+  avatar?: string;
 };
 
 export async function signToken(payload: TokenPayload) {

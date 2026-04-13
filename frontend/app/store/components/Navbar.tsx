@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-type SessionUser = { name: string; email: string; role: string; loyaltyPoints?: number } | null;
+type SessionUser = { name: string; email: string; role: string; loyaltyPoints?: number; avatar?: string } | null;
 
 export default function Navbar() {
   const router = useRouter();
@@ -98,9 +98,13 @@ export default function Navbar() {
           {/* Account */}
           <div className="relative">
             <button aria-label="Account" onClick={() => user ? setMenuOpen(!menuOpen) : router.push("/store/login")}>
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A9 9 0 1 1 18.88 17.804M15 11a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />
-              </svg>
+              {user?.avatar ? (
+                <img src={user.avatar} alt={user.name} className="w-7 h-7 rounded-full object-cover border border-gray-200" />
+              ) : (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A9 9 0 1 1 18.88 17.804M15 11a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />
+                </svg>
+              )}
             </button>
             {user && menuOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-50 py-2">
