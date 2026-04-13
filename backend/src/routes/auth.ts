@@ -127,14 +127,14 @@ router.get("/google/callback", async (req: Request, res: Response) => {
         grant_type: "authorization_code",
       }),
     });
-    const tokenData = await tokenRes.json();
+    const tokenData = await tokenRes.json() as any;
     if (!tokenData.access_token)
       return res.redirect(`${FRONTEND_URL}/store/login?error=token_failed`);
 
     const profileRes = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     });
-    const profile = await profileRes.json();
+    const profile = await profileRes.json() as any;
 
     await connectDB();
     let user = await User.findOne({ email: profile.email });
@@ -198,21 +198,21 @@ router.get("/github/callback", async (req: Request, res: Response) => {
         redirect_uri: `${FRONTEND_URL}/api/auth/github/callback`,
       }),
     });
-    const tokenData = await tokenRes.json();
+    const tokenData = await tokenRes.json() as any;
     if (!tokenData.access_token)
       return res.redirect(`${FRONTEND_URL}/store/login?error=token_failed`);
 
     const profileRes = await fetch("https://api.github.com/user", {
       headers: { Authorization: `Bearer ${tokenData.access_token}`, "User-Agent": "arik-app" },
     });
-    const profile = await profileRes.json();
+    const profile = await profileRes.json() as any;
 
     let email = profile.email;
     if (!email) {
       const emailsRes = await fetch("https://api.github.com/user/emails", {
         headers: { Authorization: `Bearer ${tokenData.access_token}`, "User-Agent": "arik-app" },
       });
-      const emails: { email: string; primary: boolean; verified: boolean }[] = await emailsRes.json();
+      const emails: { email: string; primary: boolean; verified: boolean }[] = await emailsRes.json() as any;
       email = emails.find((e) => e.primary && e.verified)?.email ?? null;
     }
     if (!email) return res.redirect(`${FRONTEND_URL}/store/login?error=no_email`);
@@ -281,14 +281,14 @@ router.get("/discord/callback", async (req: Request, res: Response) => {
         redirect_uri: `${FRONTEND_URL}/api/auth/discord/callback`,
       }),
     });
-    const tokenData = await tokenRes.json();
+    const tokenData = await tokenRes.json() as any;
     if (!tokenData.access_token)
       return res.redirect(`${FRONTEND_URL}/store/login?error=token_failed`);
 
     const profileRes = await fetch("https://discord.com/api/users/@me", {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     });
-    const profile = await profileRes.json();
+    const profile = await profileRes.json() as any;
     if (!profile.email) return res.redirect(`${FRONTEND_URL}/store/login?error=no_email`);
 
     const avatar = profile.avatar
