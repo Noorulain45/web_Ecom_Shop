@@ -351,7 +351,7 @@ Category filter also supports dress styles: `casual`, `formal`, `party`, `gym`.
 | Method | Path | Auth | Description |
 |---|---|---|---|
 | GET | `/api/cart` | User | Get current user's cart |
-| POST | `/api/cart` | User | Add item to cart |
+| POST | `/api/cart` | User | Add item to cart (validates against product stock) |
 | PATCH | `/api/cart` | User | Update item quantity |
 | DELETE | `/api/cart` | User | Remove item from cart |
 
@@ -371,6 +371,7 @@ A flat **$15 delivery fee** is added to every order total.
 |---|---|---|---|
 | POST | `/api/reviews` | User | Submit a review (one per product per user) |
 | DELETE | `/api/reviews/delete` | User | Delete own review |
+| GET | `/api/reviews` | — | Get recent reviews across all products (used by homepage) |
 | GET | `/api/reviews/[productId]` | — | Get all reviews for a product |
 
 After each review create/delete, the product's `rating` and `reviews` count are recalculated automatically.
@@ -400,9 +401,9 @@ All store pages live under `/store`.
 
 | Path | Description |
 |---|---|
-| `/store` | Homepage — Hero, Brands, New Arrivals, Top Selling, Browse by Style, Reviews, Newsletter |
+| `/store` | Homepage — Hero, Brands, New Arrivals, Top Selling, Browse by Style, Happy Customers (live reviews), Newsletter |
 | `/store/login` | Sign in / Sign up + Google, GitHub, Discord OAuth |
-| `/store/product/[id]` | Product detail — images, color/size picker, add to cart, reviews tab |
+| `/store/product/[id]` | Product detail — images, color/size picker, add to cart (with toast notification + stock enforcement), reviews tab |
 | `/store/category/[slug]` | Filtered product grid by category or style |
 | `/store/cart` | Cart with quantity controls, promo code (20% off), order summary |
 | `/store/checkout` | Checkout form — places order via `POST /api/orders` |
@@ -451,7 +452,7 @@ The `SaleGraph` component fetches `/api/dashboard/stats` and renders a Chart.js 
 
 ## Real-Time Features
 
-The project uses a custom `server.ts` that wraps Next.js inside an Express server and attaches a **Socket.io** instance to `global.__io`.
+Socket.io runs on the **Express backend** (`http://localhost:4000`) with path `/api/socket`. All frontend clients connect directly to the backend URL using `NEXT_PUBLIC_BACKEND_URL` — not through the Next.js server.
 
 ### Events
 
@@ -514,3 +515,29 @@ Regular customers register through the store login page using email/password or 
 ### Blocked Accounts
 
 If a user's `isBlocked` field is `true`, login returns a `403` error regardless of correct credentials.
+
+---
+
+## Changelog
+
+### April 14, 2026
+
+**Cart notifications**
+- Adding a product to cart now shows a fixed toast notification (top-right) — green on success, red on error.
+
+**Stock enforcement**
+- Backend cart `POST` validates requested quantity against `product.stock` before adding.
+- Product detail page shows an "Out of Stock" banner when stock is 0.
+- The quantity `+` button is capped at available stock.
+- A low-stock warning ("Only N left!") appears when stock drops to 5 or below.
+
+**Live reviews on homepage**
+- `HappyCustomers` component replaced static hardcoded reviews with real user reviews fetched from the database.
+- New `GET /api/reviews` backend endpoint returns recent reviews with comments across all products.
+
+**Newsletter subscription feedback**
+- Clicking "Subscribe to Newsletter" now replaces the form with a green success message: *"Successfully subscribed to our newsletter!"* that auto-dismisses after 4 seconds.
+
+**Socket.io fix**
+- All three socket clients (`ReviewSection`, `Topbar`, `NotificationToast`) were connecting to the Next.js server (port 3000) instead of the Express backend (port 4000), causing silent connection failures.
+- Fixed by pointing all `io()` calls to `NEXT_PUBLIC_BACKEND_URL` with `withCredentials: true`.
