@@ -21,7 +21,8 @@ export default function Topbar() {
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
-    const socket = io({ path: "/api/socket", transports: ["websocket", "polling"] });
+    const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
+    const socket = io(BACKEND_URL, { path: "/api/socket", transports: ["websocket", "polling"], withCredentials: true });
     socketRef.current = socket;
 
     socket.on("connect", () => {

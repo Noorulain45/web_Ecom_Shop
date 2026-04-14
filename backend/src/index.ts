@@ -12,6 +12,7 @@ import userRoutes from "./routes/users";
 import reviewRoutes from "./routes/reviews";
 import uploadRoutes from "./routes/upload";
 import dashboardRoutes from "./routes/dashboard";
+import paymentRoutes from "./routes/payments";
 
 const app = express();
 const httpServer = createServer(app);
@@ -21,6 +22,11 @@ const PORT = parseInt(process.env.PORT || "4000", 10);
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
 app.use(cors({ origin: FRONTEND_URL, credentials: true }));
+
+// ✅ Stripe webhook MUST use raw body (NO custom middleware needed)
+app.use("/api/payments/webhook", express.raw({ type: "application/json" }));
+
+// ✅ Normal JSON parsing for all other routes
 app.use(express.json());
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
@@ -32,6 +38,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/payments", paymentRoutes);
 
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
 

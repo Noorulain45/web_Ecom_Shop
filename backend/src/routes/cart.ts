@@ -34,6 +34,19 @@ router.post("/", async (req: Request, res: Response) => {
   if (!product) return res.status(404).json({ error: "Product not found." });
 
   let cart = await Cart.findOne({ user: session.userId });
+  const currentQty = cart?.items.find((i) => i.product.toString() === productId)?.quantity ?? 0;
+  const newTotal = currentQty + quantity;
+
+  if (product.stock !== undefined && newTotal > product.stock) {
+    return res.status(400).json({
+      error: "out_of_stock",
+      available: product.stock - currentQty,
+      message: product.stock === 0
+        ? "This product is out of stock."
+        : `Only ${product.stock - currentQty} item(s) left in stock.`,
+    });
+  }
+
   if (!cart) {
     cart = await Cart.create({ user: session.userId, items: [{ product: productId, quantity, price: product.price }] });
   } else {

@@ -1,36 +1,39 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-const reviews = [
-  {
-    name: "Sarah M.",
-    rating: 5,
-    text: "I'm blown away by the quality and style of the clothes I received from Shop.co. From casual wear to elegant dresses, every piece I've bought has exceeded my expectations.",
-  },
-  {
-    name: "Alex K.",
-    rating: 5,
-    text: "Finding clothes that align with my personal style used to be a challenge until I discovered Shop.co. The range of options they offer is truly remarkable.",
-  },
-  {
-    name: "James L.",
-    rating: 5,
-    text: "As someone who's always on the lookout for unique fashion pieces, I'm thrilled to have stumbled upon Shop.co. The selection of clothes is not only diverse but also on-point with the latest trends.",
-  },
-];
+interface Review {
+  _id: string;
+  rating: number;
+  comment: string;
+  user?: { name?: string };
+}
 
 function Stars({ count }: { count: number }) {
   return (
     <div className="flex gap-0.5 mb-2">
-      {Array.from({ length: count }).map((_, i) => (
-        <span key={i} className="text-yellow-400 text-sm">★</span>
+      {Array.from({ length: 5 }).map((_, i) => (
+        <span key={i} className={`text-sm ${i < count ? "text-yellow-400" : "text-gray-300"}`}>★</span>
       ))}
     </div>
   );
 }
 
 export default function HappyCustomers() {
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [start, setStart] = useState(0);
+
+  useEffect(() => {
+    fetch("/api/reviews?limit=20")
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) setReviews(data);
+      })
+      .catch(() => {});
+  }, []);
+
+  if (reviews.length === 0) return null;
+
+  const visible = reviews.slice(start, start + 3);
 
   return (
     <section className="max-w-7xl mx-auto px-4 md:px-8 py-12">
@@ -43,7 +46,7 @@ export default function HappyCustomers() {
             aria-label="Previous"
           >‹</button>
           <button
-            onClick={() => setStart(Math.min(reviews.length - 1, start + 1))}
+            onClick={() => setStart(Math.min(reviews.length - 3, start + 1))}
             className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100"
             aria-label="Next"
           >›</button>
@@ -51,14 +54,14 @@ export default function HappyCustomers() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 overflow-hidden">
-        {reviews.slice(start, start + 3).map((r) => (
-          <div key={r.name} className="border border-gray-200 rounded-2xl p-5 md:p-6">
+        {visible.map((r) => (
+          <div key={r._id} className="border border-gray-200 rounded-2xl p-5 md:p-6">
             <Stars count={r.rating} />
             <div className="flex items-center gap-2 mb-3">
-              <span className="font-semibold text-sm">{r.name}</span>
+              <span className="font-semibold text-sm">{r.user?.name || "Customer"}</span>
               <span className="text-green-500 text-xs">✔</span>
             </div>
-            <p className="text-gray-500 text-sm leading-relaxed">{r.text}</p>
+            <p className="text-gray-500 text-sm leading-relaxed">{r.comment}</p>
           </div>
         ))}
       </div>

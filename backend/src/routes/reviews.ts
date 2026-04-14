@@ -10,6 +10,22 @@ function getIO() {
   return (global as any).__io ?? null;
 }
 
+// GET /api/reviews — fetch recent reviews across all products (for homepage)
+router.get("/", async (req: Request, res: Response) => {
+  await connectDB();
+  try {
+    const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
+    const reviews = await Review.find({ comment: { $ne: "" } })
+      .populate("user", "name")
+      .populate("product", "name")
+      .sort({ createdAt: -1 })
+      .limit(limit);
+    return res.json(reviews);
+  } catch {
+    return res.status(500).json({ error: "Failed to fetch reviews" });
+  }
+});
+
 // GET /api/reviews/:productId
 router.get("/:productId", async (req: Request, res: Response) => {
   await connectDB();

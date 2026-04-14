@@ -4,7 +4,8 @@ import { Suspense, useEffect, useState } from "react";
 
 function OrderSuccessContent() {
   const params = useSearchParams();
-  const orderId = params.get("orderId");
+  // orderId comes from legacy flow; ref is the Stripe PaymentIntent ID from the new flow
+  const orderId = params.get("orderId") ?? params.get("ref");
   const pointsEarned = Number(params.get("pts") ?? 0);
   const [totalPoints, setTotalPoints] = useState<number | null>(null);
 
@@ -26,7 +27,7 @@ function OrderSuccessContent() {
         <p className="text-gray-500 mb-2">Thank you for your purchase.</p>
         {orderId && (
           <p className="text-sm text-gray-400 mb-6">
-            Order ID: <span className="font-semibold text-black">{orderId}</span>
+            Reference: <span className="font-semibold text-black">{orderId}</span>
           </p>
         )}
 

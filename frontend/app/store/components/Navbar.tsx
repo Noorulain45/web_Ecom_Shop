@@ -118,6 +118,12 @@ export default function Navbar() {
                     )}
                   </p>
                 )}
+                {user.role === "user" && (
+                  <button onClick={() => { router.push("/store/profile"); setMenuOpen(false); }}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50">
+                    My Profile
+                  </button>
+                )}
                 {["admin", "superadmin"].includes(user.role) && (
                   <button onClick={() => { router.push("/dashboard"); setMenuOpen(false); }}
                     className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50">
@@ -164,6 +170,10 @@ export default function Navbar() {
                   ⭐ {user.loyaltyPoints ?? 0} pts
                   {(user.loyaltyPoints ?? 0) < 500 && ` · ${500 - (user.loyaltyPoints ?? 0)} to unlock loyalty`}
                 </p>
+              )}
+              {user.role === "user" && (
+                <button onClick={() => { router.push("/store/profile"); setMobileOpen(false); }}
+                  className="text-left text-sm text-gray-700 hover:text-black">My Profile</button>
               )}
               {["admin", "superadmin"].includes(user.role) && (
                 <button onClick={() => { router.push("/dashboard"); setMobileOpen(false); }}

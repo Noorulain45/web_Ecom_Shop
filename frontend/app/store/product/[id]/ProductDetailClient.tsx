@@ -19,6 +19,7 @@ interface ProductProps {
   rating: number;
   reviews: number;
   loyaltyOnly?: boolean;
+  stock?: number;
 }
 
 function buildCloudinaryUrl(url: string, width: number) {
@@ -56,7 +57,12 @@ export default function ProductDetailClient({
   const [activeTab, setActiveTab] = useState("Ratings & Reviews");
   const [selectedThumb, setSelectedThumb] = useState(0);
   const [addingToCart, setAddingToCart] = useState(false);
-  const [cartMsg, setCartMsg] = useState("");
+  const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
+
+  function showToast(msg: string, type: "success" | "error") {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3000);
+  }
 
   // Active images for the currently selected color
   const activeImages = getColorImgs(selectedColor);
@@ -69,7 +75,6 @@ export default function ProductDetailClient({
 
   const handleAddToCart = async () => {
     setAddingToCart(true);
-    setCartMsg("");
     try {
       const res = await fetch("/api/cart", {
         method: "POST",
@@ -80,15 +85,14 @@ export default function ProductDetailClient({
         router.push("/store/login");
         return;
       }
+      const d = await res.json();
       if (!res.ok) {
-        const d = await res.json();
-        setCartMsg(d.error || "Failed to add to cart.");
+        showToast(d.message || d.error || "Failed to add to cart.", "error");
         return;
       }
-      setCartMsg("Added to cart!");
-      setTimeout(() => setCartMsg(""), 2000);
+      showToast(`${product.name} added to cart!`, "success");
     } catch {
-      setCartMsg("Something went wrong.");
+      showToast("Something went wrong.", "error");
     } finally {
       setAddingToCart(false);
     }
@@ -96,8 +100,25 @@ export default function ProductDetailClient({
 
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-8 pb-8">
-      <div className="flex flex-col md:flex-row gap-6 md:gap-8">
+      {/* Toast notification */}
+      {toast && (
+        <div className={`fixed top-6 right-6 z-50 flex items-center gap-2 px-5 py-3 rounded-xl shadow-lg text-sm font-semibold transition-all ${
+          toast.type === "success" ? "bg-green-500 text-white" : "bg-red-500 text-white"
+        }`}>
+          {toast.type === "success" ? (
+            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          ) : (
+            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          )}
+          {toast.msg}
+        </div>
+      )}
 
+      <div className="flex flex-col md:flex-row gap-6 md:gap-8">
         {/* Thumbnails — vertical strip on the left */}
         <div className="hidden md:flex flex-col gap-3 w-[112px] flex-shrink-0">
           {activeImages.slice(0, 3).map((img, i) => (
@@ -230,6 +251,11 @@ export default function ProductDetailClient({
                 </p>
               </div>
             </div>
+          ) : product.stock === 0 ? (
+            <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-2xl px-4 py-3">
+              <span className="text-2xl">🚫</span>
+              <p className="text-sm font-semibold text-red-700">Out of Stock</p>
+            </div>
           ) : (
           <div className="flex items-center gap-4">
             <div className="flex items-center bg-gray-100 rounded-full px-4 py-2 gap-4">
@@ -239,7 +265,7 @@ export default function ProductDetailClient({
               >−</button>
               <span className="text-sm font-semibold w-4 text-center">{quantity}</span>
               <button
-                onClick={() => setQuantity(quantity + 1)}
+                onClick={() => setQuantity(product.stock != null ? Math.min(product.stock, quantity + 1) : quantity + 1)}
                 className="text-xl font-bold w-6 h-6 flex items-center justify-center"
               >+</button>
             </div>
@@ -252,10 +278,8 @@ export default function ProductDetailClient({
             </button>
           </div>
           )}
-          {cartMsg && (
-            <p className={`text-xs ${cartMsg.includes("Added") ? "text-green-600" : "text-red-500"}`}>
-              {cartMsg}
-            </p>
+          {product.stock != null && product.stock > 0 && product.stock <= 5 && (
+            <p className="text-xs text-orange-500 font-medium">Only {product.stock} left in stock!</p>
           )}
         </div>
       </div>

@@ -100,6 +100,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           loyaltyOnly: !!product.loyaltyOnly,
           rating: product.rating ?? 0,
           reviews: product.reviews ?? 0,
+          stock: product.stock ?? 0,
         }}
         currentUserId={session?.userId}
         currentUserName={session?.name}

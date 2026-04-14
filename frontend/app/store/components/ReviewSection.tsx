@@ -72,11 +72,14 @@ export default function ReviewSection({ productId, currentUserId, currentUserNam
       .finally(() => setLoading(false));
   }, [productId]);
 
-  // Socket.io — connects to the same Next.js server via /api/socket path
+  // Socket.io — connects directly to the Express backend
   useEffect(() => {
-    const socket = io({
+    const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
+
+    const socket = io(BACKEND_URL, {
       path: "/api/socket",
       transports: ["websocket", "polling"],
+      withCredentials: true,
     });
 
     socketRef.current = socket;

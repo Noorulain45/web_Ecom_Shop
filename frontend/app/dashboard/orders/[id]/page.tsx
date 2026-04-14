@@ -18,6 +18,7 @@ interface Order {
   items: OrderItem[];
   totalAmount: number;
   status: OrderStatus;
+  stripePaymentIntentId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -139,8 +140,40 @@ export default function OrderDetailPage() {
             >
               {saving ? "..." : saved ? "✓ Saved" : "Save"}
             </button>
+          </div>        </div>
+
+        {/* Quick action buttons */}
+        {order.status === "pending" && (
+          <div className="flex items-center gap-2 -mt-3 flex-wrap">
+            <span className="text-xs text-gray-400">Quick actions:</span>
+            <button
+              onClick={async () => { setStatus("processing"); setSaving(true); const res = await fetch(`/api/orders/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "processing" }) }); if (res.ok) { const u = await res.json(); setOrder(u); setStatus(u.status); setSaved(true); setTimeout(() => setSaved(false), 2000); } setSaving(false); }}
+              disabled={saving}
+              className="px-4 py-1.5 bg-green-600 text-white text-xs font-semibold rounded-lg hover:bg-green-700 disabled:opacity-40 transition-colors"
+            >
+              ✓ Accept Order
+            </button>
+            <button
+              onClick={async () => { setSaving(true); const res = await fetch(`/api/orders/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "cancelled" }) }); if (res.ok) { const u = await res.json(); setOrder(u); setStatus(u.status); setSaved(true); setTimeout(() => setSaved(false), 2000); } setSaving(false); }}
+              disabled={saving}
+              className="px-4 py-1.5 bg-red-500 text-white text-xs font-semibold rounded-lg hover:bg-red-600 disabled:opacity-40 transition-colors"
+            >
+              ✗ Reject Order
+            </button>
           </div>
-        </div>
+        )}
+        {order.status === "processing" && (
+          <div className="flex items-center gap-2 -mt-3 flex-wrap">
+            <span className="text-xs text-gray-400">Quick actions:</span>
+            <button
+              onClick={async () => { setSaving(true); const res = await fetch(`/api/orders/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "delivered" }) }); if (res.ok) { const u = await res.json(); setOrder(u); setStatus(u.status); setSaved(true); setTimeout(() => setSaved(false), 2000); } setSaving(false); }}
+              disabled={saving}
+              className="px-4 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-40 transition-colors"
+            >
+              🚚 Mark as Delivered
+            </button>
+          </div>
+        )}
 
         {/* Date range */}
         <p className="text-xs text-gray-400 flex items-center gap-1.5 -mt-3">
@@ -199,9 +232,14 @@ export default function OrderDetailPage() {
             <p className="text-sm font-semibold text-gray-800 mb-2">Payment Info</p>
             <p className="text-xs text-gray-500 flex items-center gap-1.5">
               <span className="text-red-500 text-base">💳</span>
-              Master Card **** **** **** 6601
+              Stripe — Online Payment
             </p>
-            <p className="text-xs text-gray-500 mt-1">Business name: {customerName}</p>
+            {order.stripePaymentIntentId && (
+              <p className="text-xs text-gray-400 mt-1 font-mono break-all">
+                ID: {order.stripePaymentIntentId}
+              </p>
+            )}
+            <p className="text-xs text-gray-500 mt-1">Customer: {customerName}</p>
           </div>
           <div>
             <p className="text-sm font-semibold text-gray-800 mb-2">Note</p>

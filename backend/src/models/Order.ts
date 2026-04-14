@@ -15,6 +15,7 @@ export interface IOrder extends Document {
   items: IOrderItem[];
   totalAmount: number;
   status: OrderStatus;
+  stripePaymentIntentId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -40,6 +41,7 @@ const OrderSchema = new Schema<IOrder>(
       enum: ["pending", "processing", "delivered", "cancelled", "returned"],
       default: "pending",
     },
+    stripePaymentIntentId: { type: String },
   },
   { timestamps: true }
 );

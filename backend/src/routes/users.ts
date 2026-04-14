@@ -5,6 +5,25 @@ import { getSession } from "../lib/auth";
 
 const router = Router();
 
+// PATCH /api/users/me — update own profile (name, avatar)
+router.patch("/me", async (req: Request, res: Response) => {
+  const session = await getSession(req);
+  if (!session) return res.status(401).json({ error: "Unauthenticated." });
+
+  await connectDB();
+  const { name, avatar } = req.body;
+  const update: Record<string, unknown> = {};
+  if (name && typeof name === "string") update.name = name.trim();
+  if (typeof avatar === "string") update.avatar = avatar;
+
+  if (Object.keys(update).length === 0)
+    return res.status(400).json({ error: "Nothing to update." });
+
+  const user = await User.findByIdAndUpdate(session.userId, update, { new: true }).select("-password");
+  if (!user) return res.status(404).json({ error: "User not found." });
+  return res.json(user);
+});
+
 // GET /api/users
 router.get("/", async (req: Request, res: Response) => {
   const session = await getSession(req);

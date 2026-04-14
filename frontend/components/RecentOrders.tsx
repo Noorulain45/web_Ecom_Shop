@@ -1,5 +1,7 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { io, Socket } from "socket.io-client";
+import Link from "next/link";
 
 interface OrderItem {
   name: string;
@@ -33,10 +35,18 @@ const statusDot: Record<string, string> = {
   returned: "bg-gray-400",
 };
 
+interface NewOrderToast {
+  orderId: string;
+  _id: string;
+  totalAmount: number;
+}
+
 export default function RecentOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [toast, setToast] = useState<NewOrderToast | null>(null);
+  const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
     fetch("/api/orders")
@@ -44,6 +54,34 @@ export default function RecentOrders() {
       .then((data) => setOrders(Array.isArray(data) ? data.slice(0, 6) : []))
       .catch(() => setOrders([]))
       .finally(() => setLoading(false));
+  }, []);
+
+  // Real-time: listen for new orders as admin
+  useEffect(() => {
+    const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
+    const socket = io(BACKEND, {
+      path: "/api/socket",
+      transports: ["websocket", "polling"],
+    });
+    socketRef.current = socket;
+
+    socket.on("connect", () => {
+      socket.emit("register_role", "admin");
+    });
+
+    socket.on("new_order", (order: NewOrderToast & Partial<Order>) => {
+      // Prepend to list
+      setOrders((prev) => {
+        const full = order as Order;
+        if (prev.find((o) => o._id === full._id)) return prev;
+        return [full, ...prev].slice(0, 6);
+      });
+      // Show toast
+      setToast({ orderId: order.orderId, _id: order._id, totalAmount: order.totalAmount ?? 0 });
+      setTimeout(() => setToast(null), 6000);
+    });
+
+    return () => { socket.disconnect(); };
   }, []);
 
   async function deleteOrder(id: string) {
@@ -57,7 +95,25 @@ export default function RecentOrders() {
   }
 
   return (
-    <div className="bg-white rounded-lg p-5 shadow-sm">
+    <div className="bg-white rounded-lg p-5 shadow-sm relative">
+      {/* New order toast */}
+      {toast && (
+        <div className="absolute top-3 right-3 z-10 bg-green-600 text-white text-xs rounded-xl px-4 py-3 shadow-lg flex items-center gap-3 animate-pulse">
+          <span>🛒</span>
+          <div>
+            <p className="font-semibold">New Order Received!</p>
+            <p className="opacity-90">{toast.orderId} — ${toast.totalAmount.toFixed(2)}</p>
+          </div>
+          <Link
+            href={`/dashboard/orders/${toast._id}`}
+            className="ml-2 underline font-semibold whitespace-nowrap"
+          >
+            View →
+          </Link>
+          <button onClick={() => setToast(null)} className="ml-1 opacity-70 hover:opacity-100">✕</button>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-base font-semibold text-gray-800">Recent Orders</h2>
       </div>
@@ -83,18 +139,22 @@ export default function RecentOrders() {
               </tr>
             )}
             {orders.map((order) => {
-              const productName = order.items[0]?.name ?? "—";
+              const productName = order.items?.[0]?.name ?? "—";
               const customerName = order.user?.name ?? "Guest";
               const initials = customerName.charAt(0).toUpperCase();
               const date = new Date(order.createdAt).toLocaleDateString("en-US", {
                 month: "short", day: "numeric", year: "numeric",
               });
-              const statusKey = order.status.toLowerCase();
+              const statusKey = order.status?.toLowerCase() ?? "pending";
               const isDeleting = deleting === order._id;
               return (
                 <tr key={order._id} className={`border-b border-gray-50 hover:bg-gray-50 transition-opacity ${isDeleting ? "opacity-40" : ""}`}>
                   <td className="py-3 pr-4 text-gray-600">{productName}</td>
-                  <td className="py-3 pr-4 text-gray-500">{order.orderId}</td>
+                  <td className="py-3 pr-4 text-gray-500">
+                    <Link href={`/dashboard/orders/${order._id}`} className="hover:underline hover:text-[#1a3a5c]">
+                      {order.orderId}
+                    </Link>
+                  </td>
                   <td className="py-3 pr-4 text-gray-500">{date}</td>
                   <td className="py-3 pr-4">
                     <div className="flex items-center gap-2">
